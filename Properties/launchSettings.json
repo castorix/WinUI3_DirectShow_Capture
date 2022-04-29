@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WinUI3_DirectShow_Capture (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "WinUI3_DirectShow_Capture (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
