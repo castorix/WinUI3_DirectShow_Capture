@@ -120,8 +120,99 @@ namespace WinUI3_DirectShow_Capture
             public int biClrImportant;
         }
 
+        [DllImport("User32.dll", SetLastError = true)]
+        public static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, int dwStyle, int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
+
+        public const int WS_OVERLAPPED = 0x00000000,
+            WS_POPUP = unchecked((int)0x80000000),
+            WS_CHILD = 0x40000000,
+            WS_MINIMIZE = 0x20000000,
+            WS_VISIBLE = 0x10000000,
+            WS_DISABLED = 0x08000000,
+            WS_CLIPSIBLINGS = 0x04000000,
+            WS_CLIPCHILDREN = 0x02000000,
+            WS_MAXIMIZE = 0x01000000,
+            WS_CAPTION = 0x00C00000,
+            WS_BORDER = 0x00800000,
+            WS_DLGFRAME = 0x00400000,
+            WS_VSCROLL = 0x00200000,
+            WS_HSCROLL = 0x00100000,
+            WS_SYSMENU = 0x00080000,
+            WS_THICKFRAME = 0x00040000,
+            WS_TABSTOP = 0x00010000,
+            WS_MINIMIZEBOX = 0x00020000,
+            WS_MAXIMIZEBOX = 0x00010000,
+            WS_OVERLAPPEDWINDOW = WS_OVERLAPPED |
+                             WS_CAPTION |
+                             WS_SYSMENU |
+                             WS_THICKFRAME |
+                             WS_MINIMIZEBOX |
+                             WS_MAXIMIZEBOX;
+
+        public const int WS_EX_DLGMODALFRAME = 0x00000001;
+        public const int WS_EX_NOPARENTNOTIFY = 0x00000004;
+        public const int WS_EX_TOPMOST = 0x00000008;
+        public const int WS_EX_ACCEPTFILES = 0x00000010;
+        public const int WS_EX_TRANSPARENT = 0x00000020;
+        public const int WS_EX_MDICHILD = 0x00000040;
+        public const int WS_EX_TOOLWINDOW = 0x00000080;
+        public const int WS_EX_WINDOWEDGE = 0x00000100;
+        public const int WS_EX_CLIENTEDGE = 0x00000200;
+        public const int WS_EX_CONTEXTHELP = 0x00000400;
+        public const int WS_EX_RIGHT = 0x00001000;
+        public const int WS_EX_LEFT = 0x00000000;
+        public const int WS_EX_RTLREADING = 0x00002000;
+        public const int WS_EX_LTRREADING = 0x00000000;
+        public const int WS_EX_LEFTSCROLLBAR = 0x00004000;
+        public const int WS_EX_RIGHTSCROLLBAR = 0x00000000;
+        public const int WS_EX_CONTROLPARENT = 0x00010000;
+        public const int WS_EX_STATICEDGE = 0x00020000;
+        public const int WS_EX_APPWINDOW = 0x00040000;
+        public const int WS_EX_OVERLAPPEDWINDOW = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
+        public const int WS_EX_PALETTEWINDOW = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
+        public const int WS_EX_LAYERED = 0x00080000;
+        public const int WS_EX_NOINHERITLAYOUT = 0x00100000; // Disable inheritence of mirroring by children
+        public const int WS_EX_NOREDIRECTIONBITMAP = 0x00200000;
+        public const int WS_EX_LAYOUTRTL = 0x00400000; // Right to left mirroring
+        public const int WS_EX_COMPOSITED = 0x02000000;
+        public const int WS_EX_NOACTIVATE = 0x08000000;
+
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int GetSystemMetrics(int nIndex);
+
+        public const int SM_CXSCREEN = 0;
+        public const int SM_CYSCREEN = 1;
+
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+
+        [DllImport("Gdi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
+
+        [DllImport("Gdi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr CreateRectRgn(int x1, int y1, int x2, int y2);
+
+        [DllImport("Gdi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int CombineRgn(IntPtr hrgnDest, IntPtr hrgnSrc1, IntPtr hrgnSrc2, int iMode);
+
+        [DllImport("Gdi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int SelectClipRgn(IntPtr hdc, IntPtr hrgn);
+
+        public const int RGN_AND = 1;
+        public const int RGN_OR = 2;
+        public const int RGN_XOR = 3;
+        public const int RGN_DIFF = 4;
+        public const int RGN_COPY = 5;
+        public const int RGN_MIN = RGN_AND;
+        public const int RGN_MAX = RGN_COPY;
+
+        public const int ERROR = 0;
+        public const int NULLREGION = 1;
+        public const int SIMPLEREGION = 2;
+        public const int COMPLEXREGION = 3;
 
         public const int WM_APP = 0x8000;
+
 
         IntPtr hWnd = IntPtr.Zero;
         IntPtr hWndChild = IntPtr.Zero;
@@ -143,18 +234,25 @@ namespace WinUI3_DirectShow_Capture
         private int nXCaptureWindow = 10, nYCaptureWindow = 10, nWidthCaptureWindow = 640, nHeightCaptureWindow = 480;
         IVMRWindowlessControl9 g_pWC = null;
 
+        IntPtr m_hWndContainer = IntPtr.Zero;
+
         public MainWindow()
         {
             this.InitializeComponent();
             hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
-            //hWndChild = FindWindowEx(hWnd, IntPtr.Zero, "Microsoft.UI.Content.ContentWindowSiteBridge", null);
+            // For 1.1.0 release 
+            hWndChild = FindWindowEx(hWnd, IntPtr.Zero, "Microsoft.UI.Content.ContentWindowSiteBridge", null);
             //hWnd = hWndChild;
+            //m_hWndContainer = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_LAYERED, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            m_hWndContainer = CreateWindowEx(0, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            RECT rect = new RECT(nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow);
+            SetRegion(hWndChild, true, ref rect);
 
             HRESULT hr = CaptureVideo();
 
-            SubClassDelegate = new SUBCLASSPROC(WindowSubClass);
-            bool bRet = SetWindowSubclass(hWnd, SubClassDelegate, 0, 0);
+            //SubClassDelegate = new SUBCLASSPROC(WindowSubClass);
+            //bool bRet = SetWindowSubclass(hWnd, SubClassDelegate, 0, 0);
 
             Microsoft.UI.WindowId myWndId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
             _apw = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(myWndId);
@@ -263,10 +361,11 @@ namespace WinUI3_DirectShow_Capture
                                 g_pWC = (IVMRWindowlessControl9)pVideoMixingRenderer9;
                                 if (g_pWC != null)
                                 {
-                                    hr = g_pWC.SetVideoClippingWindow(hWnd);
+                                    hr = g_pWC.SetVideoClippingWindow(m_hWndContainer);
                                     //hr = pWC.SetBorderColor((uint)ColorTranslator.ToWin32(System.Drawing.Color.Red));
                                     //RECT rcSrc = new RECT(0, 0, 0, 0);
-                                    RECT rcDest = new RECT(nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow + nXCaptureWindow, nHeightCaptureWindow + nYCaptureWindow);
+                                    //RECT rcDest = new RECT(nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow + nXCaptureWindow, nHeightCaptureWindow + nYCaptureWindow);
+                                    RECT rcDest = new RECT(0, 0, nWidthCaptureWindow, nHeightCaptureWindow);
                                     //RECT rcDest = new RECT(0, 0, 0, 0);
                                     //hr = pWC.SetVideoPosition(ref rcSrc, ref rcDest);
                                     hr = g_pWC.SetVideoPosition(IntPtr.Zero, ref rcDest);
@@ -440,6 +539,24 @@ namespace WinUI3_DirectShow_Capture
             int nY = System.Convert.ToInt32((rcWorkArea.top + rcWorkArea.bottom) / (double)2 - (rc.bottom - rc.top) / (double)2);
             //SetWindowPos(hWnd, IntPtr.Zero, nX, nY, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
             SetWindowPos(hWnd, IntPtr.Zero, nX, nY, -1, -1, SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+        }
+
+        private void SetRegion(IntPtr hWnd, bool bRegion, ref RECT rect)
+        {
+            if (bRegion)
+            {
+                RECT rc;
+                GetClientRect(hWnd, out rc);
+                int nScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+                int nScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+                IntPtr WindowRgn = CreateRectRgn(0, 0, nScreenWidth, nScreenHeight);
+                IntPtr HoleRgn = CreateRectRgn(rect.left, rect.top, rect.right, rect.bottom);
+                CombineRgn(WindowRgn, WindowRgn, HoleRgn, RGN_DIFF);
+                SetWindowRgn(hWnd, WindowRgn, true);
+                DeleteObject(HoleRgn);
+            }
+            else
+                SetWindowRgn(hWnd, IntPtr.Zero, true);
         }
     }        
 }
