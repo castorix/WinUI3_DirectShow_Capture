@@ -213,6 +213,14 @@ namespace WinUI3_DirectShow_Capture
 
         public const int WM_APP = 0x8000;
 
+        public const uint LWA_COLORKEY = 0x00000001;
+        public const uint LWA_ALPHA = 0x00000002;
+
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+
+
+
 
         IntPtr hWnd = IntPtr.Zero;
         IntPtr hWndChild = IntPtr.Zero;
@@ -241,13 +249,14 @@ namespace WinUI3_DirectShow_Capture
             this.InitializeComponent();
             hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
-            // For 1.1.0 release 
-            hWndChild = FindWindowEx(hWnd, IntPtr.Zero, "Microsoft.UI.Content.ContentWindowSiteBridge", null);
-            //hWnd = hWndChild;
-            //m_hWndContainer = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_LAYERED, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-            m_hWndContainer = CreateWindowEx(0, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            // For 1.1.0 release (layered child)
+            // hWndChild = FindWindowEx(hWnd, IntPtr.Zero, "Microsoft.UI.Content.ContentWindowSiteBridge", null);
+            // hWnd = hWndChild;
+            // m_hWndContainer = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_LAYERED, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            m_hWndContainer = CreateWindowEx(WS_EX_LAYERED, "Static", "", WS_VISIBLE | WS_CHILD, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow, hWnd, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            SetOpacity(m_hWndContainer, 100);
             RECT rect = new RECT(nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow, nHeightCaptureWindow);
-            SetRegion(hWndChild, true, ref rect);
+            //SetRegion(hWndChild, true, ref rect);
 
             HRESULT hr = CaptureVideo();
 
@@ -557,6 +566,11 @@ namespace WinUI3_DirectShow_Capture
             }
             else
                 SetWindowRgn(hWnd, IntPtr.Zero, true);
+        }
+
+        public void SetOpacity(IntPtr hWnd, int nOpacity)
+        {
+            SetLayeredWindowAttributes(hWnd, 0, (byte)(255 * nOpacity / 100), LWA_ALPHA);
         }
     }        
 }
