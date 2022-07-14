@@ -68,6 +68,8 @@ namespace WinUI3_DirectShow_Capture
         public const int WM_SIZE = 0x0005;
         public const int WM_PAINT = 0x000F;
         public const int WM_ERASEBKGND = 0x0014;
+        public const int WM_NCHITTEST = 0x0084;
+        public const int HTCLIENT = 1;
 
         public delegate int SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, uint dwRefData);
 
@@ -260,8 +262,8 @@ namespace WinUI3_DirectShow_Capture
 
             HRESULT hr = CaptureVideo();
 
-            //SubClassDelegate = new SUBCLASSPROC(WindowSubClass);
-            //bool bRet = SetWindowSubclass(hWnd, SubClassDelegate, 0, 0);
+            SubClassDelegate = new SUBCLASSPROC(WindowSubClass);
+            bool bRet = SetWindowSubclass(m_hWndContainer, SubClassDelegate, 0, 0);
 
             Microsoft.UI.WindowId myWndId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
             _apw = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(myWndId);
@@ -519,21 +521,26 @@ namespace WinUI3_DirectShow_Capture
         {
             switch (uMsg)
             {
-                case WM_ERASEBKGND:
+                case WM_NCHITTEST:
                     {
-                        RECT rect;
-                        GetClientRect(hWnd, out rect);
-
-                        int nRet = ExcludeClipRect(wParam, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow + nXCaptureWindow, nHeightCaptureWindow + nYCaptureWindow);
-
-                        //IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.Red));
-                        //IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.FromArgb(255, 32, 32, 32)));
-                        IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.Black));
-                        FillRect(wParam, ref rect, hBrush);
-                        DeleteObject(hBrush);
-                        return 1;
+                        return HTCLIENT;
                     }
                     break;
+                //case WM_ERASEBKGND:
+                //    {
+                //        RECT rect;
+                //        GetClientRect(hWnd, out rect);
+
+                //        int nRet = ExcludeClipRect(wParam, nXCaptureWindow, nYCaptureWindow, nWidthCaptureWindow + nXCaptureWindow, nHeightCaptureWindow + nYCaptureWindow);
+
+                //        //IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.Red));
+                //        //IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.FromArgb(255, 32, 32, 32)));
+                //        IntPtr hBrush = CreateSolidBrush(System.Drawing.ColorTranslator.ToWin32(System.Drawing.Color.Black));
+                //        FillRect(wParam, ref rect, hBrush);
+                //        DeleteObject(hBrush);
+                //        return 1;
+                //    }
+                //    break;
             }
             return DefSubclassProc(hWnd, uMsg, wParam, lParam);
         }
